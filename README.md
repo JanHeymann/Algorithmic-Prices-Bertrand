@@ -66,4 +66,3 @@ This repository provides extensive visualizations and statistical analyses for k
     Impact of increasing firm numbers on the stability of tacit collusion.
     Comparison of Bertrand and Cournot competition in algorithmic pricing contexts.
 
-Graphs and tables are saved in the /figures/ directory and can be reproduced or modified by running the provided scripts or notebooks.
