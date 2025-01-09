@@ -1,0 +1,60 @@
+A_levene, B_levene, reward, time = simulate_bertrand_rl(start_price_A=10, start_price_B=10)
+
+window_size = 500  # Adjust for smoothing
+A_moving_avg = pd.Series(A_levene).rolling(window=window_size, center=True).mean()
+B_moving_avg = pd.Series(B_levene).rolling(window=window_size, center=True).mean()
+
+# Subtract moving average to get residuals
+A_residuals = A_levene - A_moving_avg
+B_residuals = B_levene - B_moving_avg
+
+# Drop NaN values introduced by rolling window
+A_residuals = A_residuals[~np.isnan(A_residuals)]
+B_residuals = B_residuals[~np.isnan(B_residuals)]
+
+# Find the first occurrence of 55 in original data
+split_index_a = next((i for i, x in enumerate(A_levene) if x >= 55), None)
+split_index_b = next((i for i, x in enumerate(B_levene) if x >= 55), None)
+
+if split_index_a is not None and split_index_b is not None:
+    # Split the residuals into two groups
+    firm_a_group1 = A_residuals[:split_index_a + 1]
+    firm_a_group2 = A_residuals[split_index_a + 1:]
+    firm_b_group1 = B_residuals[:split_index_b + 1]
+    firm_b_group2 = B_residuals[split_index_b + 1:]
+    
+    var_a1, var_a2 = np.var(firm_a_group1, ddof=1), np.var(firm_a_group2, ddof=1)
+    var_b1, var_b2 = np.var(firm_b_group1, ddof=1), np.var(firm_b_group2, ddof=1)
+
+    # Determine direction of change
+    direction_a = "Increased" if var_a2 > var_a1 else "Decreased"
+    direction_b = "Increased" if var_b2 > var_b1 else "Decreased"
+
+    # Perform Levene's test
+    stat_a, p_value_a = levene(firm_a_group1, firm_a_group2)
+    stat_b, p_value_b = levene(firm_b_group1, firm_b_group2)
+
+"""
+    # Generate LaTeX Table
+    latex_table = f"""
+    \\begin{{table}}[h!]
+    \\centering
+    \\begin{{tabular}}{{|l|c|c|}}
+    \\hline
+    \\textbf{{Metric}} & \\textbf{{Firm A}} & \\textbf{{Firm B}} \\\\ \\hline
+    Variance (Group 1) & {var_a1:.4f} & {var_b1:.4f} \\\\ \\hline
+    Variance (Group 2) & {var_a2:.4f} & {var_b2:.4f} \\\\ \\hline
+    Direction of Change & {direction_a} & {direction_b} \\\\ \\hline
+    Levene's Test Statistic & {stat_a:.4f} & {stat_b:.4f} \\\\ \\hline
+    p-value & {p_value_a:.4f} & {p_value_b:.4f} \\\\ \\hline
+    Conclusion & {"Significant" if p_value_a < 0.05 else "Not Significant"} & {"Significant" if p_value_b < 0.05 else "Not Significant"} \\\\ \\hline
+    \\end{{tabular}}
+    \\caption{{Results of Levene's test for variance comparison after removing trend for Firms A and B.}}
+    \\label{{tab:levene_moving_avg}}
+    \\end{{table}}
+    """
+
+    print(latex_table)
+else:
+    print("Threshold value 55 not found in the data for one or both firms.")
+"""
