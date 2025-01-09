@@ -1,0 +1,40 @@
+drop_durations = []
+drop_magnitudes = []
+# Iterate through each firm's price history to find drop-return cycles
+for price_history in [price_history_A, price_history_B]:
+    last_price = price_history[0]
+    drop_detected = False
+    drop_start_index = 0
+    drop_start_price = last_price
+    lowest_price = last_price    
+    for i in range(1, len(price_history)):
+        current_price = price_history[i]      
+        # Detect price drop
+        if not drop_detected and current_price < last_price:
+            drop_detected = True
+            drop_start_price = last_price
+            drop_start_index = i
+            lowest_price = current_price  # Initialize lowest price with the first dropped price            
+        # Track lowest price within the drop-return cycle
+        elif drop_detected:
+            lowest_price = min(lowest_price, current_price)            
+            # Detect price return
+            if current_price >= drop_start_price:
+                duration = i - drop_start_index
+                magnitude = drop_start_price - lowest_price                
+                drop_durations.append(duration)
+                drop_magnitudes.append(magnitude)                
+                drop_detected = False  # Reset detection for the next drop-return cycle                
+        # Update last price
+        last_price = current_price
+# Magnitude histogram
+plt.figure(figsize=(12, 6))
+plt.hist(drop_magnitudes, bins=20, color='salmon', edgecolor='black')
+plt.title("Magnitude of Price Drops")
+plt.xlabel("Price Drop Magnitude")
+plt.ylabel("Frequency")
+bin_counts, bin_edges = np.histogram(drop_magnitudes, bins=20)
+for i, count in enumerate(bin_counts):
+    plt.text((bin_edges[i] + bin_edges[i + 1]) / 2, count, str(count), ha='center', va='bottom', fontsize=12)
+plt.savefig('punishment_size.png', format='png', dpi=300)
+plt.show()
