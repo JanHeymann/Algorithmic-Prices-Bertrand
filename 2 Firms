@@ -1,0 +1,160 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import csv
+import seaborn as sns
+
+class Firm:
+    def __init__(self, mc, price_floor, price_cap, learning_rate=0.85, discount_factor=0.9):
+        self.mc = mc
+        self.price_floor = price_floor
+        self.price_cap = price_cap
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.q_table = {}
+        self.last_price = (price_floor + price_cap) / 2  # Initialize to mid-range
+
+    def get_state(self, price_A, price_B):
+        return (round(price_A, 2), round(price_B, 2), round(self.last_price, 2))
+
+    def get_action(self, state):
+        if state not in self.q_table:
+            self.q_table[state] = {0: 0, 1: 0, 2: 0}
+        if np.random.rand() < 0.1:  # Exploration rate
+            return np.random.choice([0, 1, 2])
+        else:
+            return max(self.q_table[state], key=self.q_table[state].get)
+
+    def update_q_value(self, state, action, reward, next_state):
+        if next_state not in self.q_table:
+            self.q_table[next_state] = {0: 0, 1: 0, 2: 0}
+        best_next_action = max(self.q_table[next_state], key=self.q_table[next_state].get)
+        
+        #Weight the last price more heavily in decision-making
+        competitor_price_effect = 0.5 * (next_state[1] - self.mc)
+        
+        #Scale reward and include a penalty for low prices
+        scaled_reward = reward + competitor_price_effect
+        self.q_table[state][action] += self.learning_rate * (scaled_reward + self.discount_factor * self.q_table[next_state][best_next_action] - self.q_table[state][action])
+
+    def calculate_profit(self, price):
+        quantity_sold = 100 - price  # Demand function
+        return (price - self.mc) * max(quantity_sold, 0)  # Ensure non-negative quantity
+    
+    def get_learned_policy(self):
+        policy = {}
+        for state, actions in self.q_table.items():
+            best_action = max(actions, key=actions.get)
+            policy[state] = best_action
+        return policy
+
+def simulate_bertrand_rl(max_iterations=500000, price_floor=10, price_cap=55, start_price_A=10, start_price_B=10):
+    firm_A = Firm(mc=10, price_floor=price_floor, price_cap=price_cap)
+    firm_B = Firm(mc=10, price_floor=price_floor, price_cap=price_cap)
+
+    # Set starting prices
+    price_A = start_price_A if start_price_A is not None else np.random.uniform(price_floor, price_cap)
+    price_B = start_price_B if start_price_B is not None else np.random.uniform(price_floor, price_cap)
+
+    price_history_A = [start_price_A]
+    price_history_B = [start_price_B]
+    reward = []
+    convergence = []
+    tolerance = 3
+    check_interval = 100000
+    stable_count = 0
+    min_check_iterations = 500000
+    Final_Policy = []
+    actions = []
+    for i in range(max_iterations):
+        '''
+        if (i + 1) % 250000 == 0:
+            print(f"Iteration {i + 1}")
+        '''
+        state_A = firm_A.get_state(price_A, price_B)
+        state_B = firm_B.get_state(price_B, price_A)
+
+        action_A = firm_A.get_action(state_A)
+        action_B = firm_B.get_action(state_B)
+
+        # Adjust prices based on actions
+        if price_history_A[i-1] < price_history_B[i-1]:
+            price_A = min(price_B, 55)
+            actions.append(2)
+        else:
+            if action_A == 0:  # Decrease price
+                price_A = max(price_A - 1, price_floor)
+            elif action_A == 2:  # Increase price
+                price_A = min(price_A + 1, price_cap)
+            actions.append(action_A)
+                
+                
+        if price_history_A[i-1] > price_history_B[i-1]:
+            price_B = min(price_history_A[i-1], 55)
+            actions.append(2)
+        else:
+            if action_B == 0:  # Decrease price
+                price_B = max(price_B - 1, price_floor)
+            elif action_B == 2:  # Increase price
+                price_B = min(price_B + 1, price_cap)
+            actions.append(action_B)
+
+        if price_A > price_B:  
+            profit_A = 0
+            profit_B = firm_B.calculate_profit(price_B)
+            
+        if price_A < price_B:
+            profit_A = firm_A.calculate_profit(price_A)
+            profit_B = 0
+        if price_A == price_B:
+            profit_A = firm_A.calculate_profit(price_A)
+            profit_B = firm_B.calculate_profit(price_B)
+        
+        # Update last price for both firms
+        firm_A.last_price = price_B
+        firm_B.last_price = price_A
+
+        # Update Q-values with scaled rewards
+        firm_A.update_q_value(state_A, action_A, profit_A, firm_A.get_state(price_A, price_B))
+        firm_B.update_q_value(state_B, action_B, profit_B, firm_B.get_state(price_B, price_A))
+
+        # Record prices for plotting
+        price_history_A.append(price_A)
+        price_history_B.append(price_B)
+        reward.append(profit_A)
+        reward.append(profit_B)
+        
+        if i == max_iterations - 1:
+            Final_Policy.append(firm_B.get_learned_policy())
+            Final_Policy.append(firm_A.get_learned_policy())
+    return price_history_A, price_history_B, actions, Final_Policy
+
+def simulate_multiple_runs(runs, max_iterations=500000, quantity_floor=0, quantity_cap=100, b=1):
+    aggregated_policy = {}
+
+    for _ in range(runs):
+        # Simulate one run
+        _, _, _, Final_Policy = simulate_bertrand_rl(
+            start_price_A=10, start_price_B=10
+        )
+        policy_A = Final_Policy[0]  # Extract Firm A's policy
+
+        # Aggregate actions
+        for state, action in policy_A.items():
+            if state not in aggregated_policy:
+                aggregated_policy[state] = {0: 0, 1: 0, 2: 0}
+            aggregated_policy[state][action] += 1
+
+    return aggregated_policy
+"""
+Example use:
+
+start_price_A = 10  # Set starting price for Firm A
+start_price_B = 10  # Set starting price for Firm B
+
+price_history_A, price_history_B, _ = simulate_bertrand_rl(
+    start_price_A=start_price_A, start_price_B=start_price_B
+)
+
+"""
+
