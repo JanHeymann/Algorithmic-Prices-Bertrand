@@ -23,22 +23,6 @@ Key Features
     Analysis of Cournot competition (quantity-based competition).
     Support for long-term simulations with millions of iterations.
 
-Repository Structure
-
-    /notebooks/
-    Contains Jupyter notebooks for running simulations, visualizing results, and analyzing various scenarios (e.g., different marginal costs or demand functions).
-
-    /data/
-    Stores any synthetic datasets generated or used during simulations.
-
-    /src/
-    Source code for simulation functions and reinforcement learning algorithms.
-
-    /figures/
-    Graphs and visualizations produced during the simulation runs.
-
-    requirements.txt
-    List of Python dependencies required to run the simulations.
 
 Getting Started
 Prerequisites
@@ -54,7 +38,13 @@ Running the Simulations
     git clone https://github.com/JanHeymann/Algorithmic-Prices-Bertrand.git
     cd Algorithmic-Prices-Bertrand
 
-    Explore the provided Jupyter notebooks in the notebooks/ folder to run simulations interactively.
+    Explore the provided Jupyter notebooks to run simulations interactively.
+    
+    The algorithms are labeled "Algorithm, ...".
+
+    Data and statistical analysis is lableed "Data, ..."
+
+    Visualisations are labled "Visual, ..."
 
     Alternatively, use the scripts in the src/ directory for batch simulations.
 
