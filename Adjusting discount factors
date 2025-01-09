@@ -1,0 +1,114 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import ttest_ind
+import pandas as pd
+
+discount_factors = [0.1, 0.5, 0.7, 0.9, 1]
+price_floor = 10
+price_cap = 55
+max_iterations = 250000
+repeats = 5  # Number of times to repeat the simulation for each discount factor
+
+price_histories_A = {df: [] for df in discount_factors}
+price_histories_B = {df: [] for df in discount_factors}
+mean_prices_A = {}
+mean_prices_B = {}
+
+def moving_average(data, window_size):
+    return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
+
+for discount_factor in discount_factors:
+    all_prices_A = []
+    all_prices_B = []
+    
+    for _ in range(repeats):
+        firm_A_discounted = Firm(mc=10, price_floor=price_floor, price_cap=price_cap, discount_factor=discount_factor)
+        firm_B_discounted = Firm(mc=10, price_floor=price_floor, price_cap=price_cap, discount_factor=discount_factor)
+        
+        price_history_A, price_history_B, _, _ = simulate_bertrand_rl(
+            max_iterations=max_iterations,
+            price_floor=price_floor,
+            price_cap=price_cap,
+            start_price_A=10,
+            start_price_B=10
+        )
+        
+        all_prices_A.append(price_history_A)
+        all_prices_B.append(price_history_B)
+    
+    price_histories_A[discount_factor] = all_prices_A
+    price_histories_B[discount_factor] = all_prices_B
+    mean_prices_A[discount_factor] = np.mean(all_prices_A, axis=0)
+    mean_prices_B[discount_factor] = np.mean(all_prices_B, axis=0)
+
+t_matrix = pd.DataFrame(index=discount_factors, columns=discount_factors)
+
+for i, df1 in enumerate(discount_factors):
+    for j, df2 in enumerate(discount_factors):
+        if i < j:
+            # Perform t-test between prices for different discount factors
+            t_stat, _ = ttest_ind(np.concatenate(price_histories_A[df1]), np.concatenate(price_histories_A[df2]))
+            t_matrix.loc[df1, df2] = round(t_stat, 3)
+
+fig, axes = plt.subplots(1, 2, figsize=(15, 7))
+
+for discount_factor, prices in price_histories_A.items():
+    # Compute the moving average with a window size of 1000
+    window_size = 5000
+    avg_prices_A = np.mean(prices, axis=0)  # Average across repeats
+    moving_avg_A = moving_average(avg_prices_A, window_size)
+    axes[0].plot(moving_avg_A, label=f'Moving Average (Discount {discount_factor})', linewidth=2)
+
+axes[0].axhline(y=10, color='red', linestyle='--', linewidth=1.5, label='Marginal Cost (MC = 10)')
+axes[0].axhline(y=55, color='blue', linestyle='-', linewidth=1.5, label='Monopoly Price (p = 55)')
+axes[0].set_title("Price Trend with Moving Average - Firm A", fontsize=16)
+axes[0].set_xlabel("Iterations")
+axes[0].set_ylabel("Price")
+axes[0].legend()
+axes[0].set_ylim(bottom=0)
+
+for discount_factor, prices in price_histories_B.items():
+    # Compute the moving average with a window size of 1000
+    avg_prices_B = np.mean(prices, axis=0)  # Average across repeats
+    moving_avg_B = moving_average(avg_prices_B, window_size)
+    axes[1].plot(moving_avg_B, label=f'Moving Average (Discount {discount_factor})', linewidth=2)
+
+axes[1].axhline(y=10, color='red', linestyle='--', linewidth=1.5, label='Marginal Cost (MC = 10)')
+axes[1].axhline(y=55, color='blue', linestyle='-', linewidth=1.5, label='Monopoly Price (p = 55)')
+axes[1].set_title("Price Trend with Moving Average - Firm B", fontsize=16)
+axes[1].set_xlabel("Iterations")
+axes[1].legend()
+axes[1].set_ylim(bottom=0)
+
+plt.tight_layout()
+plt.savefig("price_trends_discount_factors_moving_avg_repeat.png", format="png", dpi=300)
+plt.show()
+
+
+print("T-statistics Matrix:\n", t_matrix)
+"""
+# Generating LaTeX table code for the t-statistics matrix
+latex_code = "\\begin{table}[ht]\n"
+latex_code += "\\centering\n"
+latex_code += "\\begin{tabular}{|" + "c|" * (len(discount_factors) + 1) + "}\n"
+latex_code += "\\hline\n"
+latex_code += " & " + " & ".join([str(df) for df in discount_factors]) + " \\\\ \\hline\n"
+
+for df1 in discount_factors:
+    latex_code += f"{df1} & "
+    for df2 in discount_factors:
+        if df1 == df2:
+            latex_code += " - & "
+        elif pd.isna(t_matrix.loc[df1, df2]):
+            latex_code += " & "
+        else:
+            latex_code += f"{t_matrix.loc[df1, df2]} & "
+    latex_code = latex_code.rstrip(' & ') + " \\\\ \\hline\n"
+    
+latex_code += "\\end{tabular}\n"
+latex_code += "\\caption{T-Statistics for Price Differences Between Discount Factors}\n"
+latex_code += "\\end{table}"
+
+# Print LaTeX table code
+print(latex_code)
+"""
