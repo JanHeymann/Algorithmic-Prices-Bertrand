@@ -1,0 +1,62 @@
+aggregated_policy = simulate_multiple_runs(runs=30)
+
+# Determine state dimensions dynamically for the heatmap
+states_A = list(aggregated_policy.keys())
+quantities_A = [state[0] for state in states_A]
+quantities_B = [state[1] for state in states_A]
+
+# Adjust starting ranges to begin at 10
+start_value = 10
+quantities_A = [q - start_value for q in quantities_A]
+quantities_B = [q - start_value for q in quantities_B]
+
+# Define matrix size dynamically based on observed state ranges
+matrix_size_A = int(max(quantities_A)) + 1
+matrix_size_B = int(max(quantities_B)) + 1
+
+# Create a matrix to map the most frequent actions
+policy_matrix = np.full((matrix_size_A, matrix_size_B), -1)  # Default to -1 (no action)
+
+# Populate the matrix with the most frequent actions
+for state, action_counts in aggregated_policy.items():
+    quantity_A, quantity_B, _ = state
+    adj_quantity_A = int(quantity_A - start_value)
+    adj_quantity_B = int(quantity_B - start_value)
+
+    # Determine the most frequent action for this state
+    most_frequent_action = max(action_counts, key=action_counts.get)
+    policy_matrix[adj_quantity_A][adj_quantity_B] = most_frequent_action
+
+# Plot the heatmap
+plt.figure(figsize=(10, 8))
+sns.heatmap(
+    policy_matrix,
+    cmap="coolwarm",
+    cbar=False,
+    xticklabels=[f"{x+start_value}" if (x+start_value) % 5 == 0 else "" for x in range(matrix_size_B)],
+    yticklabels=[f"{y+start_value}" if (y+start_value) % 5 == 0 else "" for y in range(matrix_size_A)]
+)
+plt.xlabel("Quantity B", fontsize=14)
+plt.ylabel("Quantity A", fontsize=14)
+
+# Add a custom legend
+from matplotlib.patches import Patch
+
+legend_elements = [
+    Patch(facecolor="blue", edgecolor="black", label="Decrease Prices"),
+    Patch(facecolor="white", edgecolor="black", label="Maintain Prices"),
+    Patch(facecolor="red", edgecolor="black", label="Increase Prices"),
+]
+plt.legend(
+    handles=legend_elements,
+    loc="upper right",
+    title="Best Actions",
+    fontsize=12,
+    title_fontsize=14,
+    frameon=True,
+    fancybox=True
+)
+
+plt.tight_layout()
+plt.savefig('heatmap.png', format='png', dpi=300)
+plt.show()
