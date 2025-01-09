@@ -1,0 +1,43 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Initialize the graph
+G = nx.DiGraph()
+
+# Define the starting state, using variables P1 and P2
+P1, P2 = 10, 10  # You can change these values to any starting prices you want
+starting_state = (P1, P2)
+G.add_node(starting_state, label=f"({starting_state[0]}, {starting_state[1]})")
+
+# Define possible actions for each firm
+actions = {
+    "decrease": -1,
+    "maintain": 0,
+    "increase": 1
+}
+
+# Generate possible transitions from the starting state
+for action_A, delta_A in actions.items():
+    for action_B, delta_B in actions.items():
+        # Calculate the new state based on actions
+        new_state = (starting_state[0] + delta_A, starting_state[1] + delta_B)
+        
+        # Add the new state and the edge to the graph
+        G.add_node(new_state, label=f"({new_state[0]}, {new_state[1]})")
+        G.add_edge(starting_state, new_state, label=f"A: {action_A}, B: {action_B}")
+
+# Draw the graph
+plt.figure(figsize=(10, 8))
+pos = nx.spring_layout(G, seed=42)  # Layout for clarity
+nx.draw_networkx_nodes(G, pos, node_size=700, node_color='lightblue')
+nx.draw_networkx_labels(G, pos, labels={state: f"{state}" for state in G.nodes()}, font_size=10)
+
+# Draw edges with action labels
+edge_labels = {(u, v): G[u][v]['label'] for u, v in G.edges()}
+nx.draw_networkx_edges(G, pos, arrowstyle='->', arrowsize=15)
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='gray', font_size=8)
+
+plt.title("MDP Transitions from the Nash Equilibrium")
+plt.axis('off')
+plt.savefig("Nash transition MDP.png", format='png', bbox_inches='tight')
+plt.show()
