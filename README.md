@@ -44,9 +44,8 @@ Running the Simulations
 
     Data and statistical analysis is lableed "Data, ..."
 
-    Visualisations are labled "Visual, ..."
-
-    Alternatively, use the scripts in the src/ directory for batch simulations.
+    Visualisations are labled "Visual, ..." 
+    Please bear in mind that the Visualisations and Data analysis cannot be conducted without running the corresponding algorithm before.
 
 Examples
 
