@@ -38,3 +38,35 @@ for i, count in enumerate(bin_counts):
     plt.text((bin_edges[i] + bin_edges[i + 1]) / 2, count, str(count), ha='center', va='bottom', fontsize=12)
 plt.savefig('punishment_size.png', format='png', dpi=300)
 plt.show()
+
+bins = [1, 2, 100, 300, 500, 1000, 2000, max(drop_durations) + 1]
+bin_labels = ["1-44", "45-100", "101-300", "301-500", "501-1000", "1001-2000", ">2000"]
+frequencies = [sum((bins[i] <= d < bins[i+1]) for d in drop_durations) for i in range(len(bins) - 1)]
+# Set up equal-width positions for the bars
+x_pos = range(len(bin_labels))
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+ax1.bar(x_pos, frequencies, color='skyblue', edgecolor='black', width=0.8)
+ax1.set_title("Duration of Price Drop-Return Cycles (All Bins)")
+ax1.set_xlabel("Iterations to Return to Original Price")
+ax1.set_ylabel("Frequency")
+
+for i, freq in enumerate(frequencies):
+    ax1.text(i, freq, str(freq), ha='center', va='bottom', fontsize=10)
+
+ax1.set_xticks(x_pos)
+ax1.set_xticklabels(bin_labels)
+# Second subplot excluding the first bin
+ax2.bar(x_pos[1:], frequencies[1:], color='salmon', edgecolor='black', width=0.8)
+ax2.set_title("Duration of Price Drop-Return Cycles (Excluding First Bin)")
+ax2.set_xlabel("Iterations to Return to Original Price")
+ax2.set_ylabel("Frequency")
+
+for i, freq in enumerate(frequencies[1:]):
+    ax2.text(i+1, freq, str(freq), ha='center', va='bottom', fontsize=10)
+
+ax2.set_xticks(x_pos[1:])
+ax2.set_xticklabels(bin_labels[1:])
+plt.tight_layout()
+plt.show()
