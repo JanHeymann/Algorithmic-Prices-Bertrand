@@ -6,7 +6,7 @@ class Firm_diffmc:
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.q_table = {}
-        self.last_price = (price_floor + price_cap) / 2  # Initialize to mid-range
+        self.last_price = (price_floor + price_cap) / 2
     def get_state(self, price_A, price_B):
         return (round(price_A, 2), round(price_B, 2), round(self.last_price, 2))
     def get_action(self, state):
@@ -22,16 +22,15 @@ class Firm_diffmc:
         best_next_action = max(self.q_table[next_state], key=self.q_table[next_state].get)        
         
         competitor_price_effect = 0.5 * (next_state[1] - self.mc)        
-        #Scale reward and include a penalty for low prices
         scaled_reward = reward + competitor_price_effect
         self.q_table[state][action] += self.learning_rate * (scaled_reward + self.discount_factor * self.q_table[next_state][best_next_action] - self.q_table[state][action])
     def calculate_profit(self, price):
-        quantity_sold = 100 - price  # Demand function
+        quantity_sold = 100 - price
         return (price - self.mc) * max(quantity_sold, 0)
 def simulate_bertrand_diffmc(max_iterations=500000, price_floor=10, price_cap=55, start_price_A=None, start_price_B=None):
     firm_A = Firm(mc=10, price_floor=price_floor, price_cap=price_cap)
     firm_B = Firm(mc=20, price_floor=20, price_cap=price_cap)
-    # Set starting prices
+
     price_A = start_price_A if start_price_A is not None else np.random.uniform(price_floor, price_cap)
     price_B = start_price_B if start_price_B is not None else np.random.uniform(price_floor, price_cap)
     price_history_A = [start_price_A]
@@ -47,7 +46,7 @@ def simulate_bertrand_diffmc(max_iterations=500000, price_floor=10, price_cap=55
         state_B = firm_B.get_state(price_B, price_A)
         action_A = firm_A.get_action(state_A)
         action_B = firm_B.get_action(state_B)
-        # Adjust prices based on actions
+
         if price_history_A[i-1] < price_history_B[i-1]:
             price_A = min(price_B, 55)
         else:
@@ -71,13 +70,13 @@ def simulate_bertrand_diffmc(max_iterations=500000, price_floor=10, price_cap=55
         if price_A == price_B:
             profit_A = firm_A.calculate_profit(price_A)
             profit_B = firm_B.calculate_profit(price_B)        
-        # Update last price for both firms
+
         firm_A.last_price = price_B
         firm_B.last_price = price_A
-        # Update Q-values with scaled rewards
+
         firm_A.update_q_value(state_A, action_A, profit_A, firm_A.get_state(price_A, price_B))
         firm_B.update_q_value(state_B, action_B, profit_B, firm_B.get_state(price_B, price_A))
-        # Record prices for plotting
+
         price_history_A.append(price_A)
         price_history_B.append(price_B)
         reward.append(profit_A)
@@ -98,7 +97,7 @@ ax1.set_ylabel('Price', fontsize=14, fontweight='bold')
 ax1.set_title('Price Evolution of Firm A Over Time', fontsize=16, fontweight='bold', pad=20)
 ax1.ticklabel_format(style='plain', axis='x')
 ax1.legend(loc='lower right', fontsize=12, frameon=True, fancybox=True, shadow=True, borderpad=1)
-ax1.set_ylim(bottom=0)  # Set the lower limit of the y-axis to 0
+ax1.set_ylim(bottom=0)  
 
 ax2.plot(moving_avg_Bdiff[:250000], label='Firm B Moving Average', color='#ff7f0e', linewidth=2, alpha=0.8)
 ax2.axhline(y=20, color='red', linestyle='--', linewidth=1.5, label='Marginal Cost (MC = 20)')
@@ -107,7 +106,7 @@ ax2.set_xlabel('Iterations', fontsize=14, fontweight='bold')
 ax2.set_title('Price Evolution of Firm B Over Time', fontsize=16, fontweight='bold', pad=20)
 ax2.ticklabel_format(style='plain', axis='x')
 ax2.legend(loc='lower right', fontsize=12, frameon=True, fancybox=True, shadow=True, borderpad=1)
-ax2.set_ylim(bottom=0)  # Set the lower limit of the y-axis to 0
+ax2.set_ylim(bottom=0) 
 
 plt.tight_layout()
 plt.savefig('movingaverage_A_B_diff_mc.png', format='png', dpi=300)
