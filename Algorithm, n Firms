@@ -6,7 +6,7 @@ class Firm_N:
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.q_table = {}
-        self.last_price = (price_floor + price_cap) / 2  # Initialize to mid-range
+        self.last_price = (price_floor + price_cap) / 2
 
     def get_state(self, prices):
         return tuple(round(p, 2) for p in prices)
@@ -14,7 +14,7 @@ class Firm_N:
     def get_action(self, state):
         if state not in self.q_table:
             self.q_table[state] = {0: 0, 1: 0, 2: 0}  # Actions: 0 (decrease), 1 (same), 2 (increase)
-        if np.random.rand() < 0.1:  # Exploration rate
+        if np.random.rand() < 0.1:
             return np.random.choice([0, 1, 2])
         else:
             return max(self.q_table[state], key=self.q_table[state].get)
@@ -23,8 +23,7 @@ class Firm_N:
         if next_state not in self.q_table:
             self.q_table[next_state] = {0: 0, 1: 0, 2: 0}
         best_next_action = max(self.q_table[next_state], key=self.q_table[next_state].get)
-        
-        # Scale reward
+
         competitor_price_effect = 0.5 * (next_state[1] - self.mc)
         scaled_reward = reward + competitor_price_effect
 
@@ -35,12 +34,11 @@ class Firm_N:
         )
 
     def calculate_profit(self, price, competitor_prices):
-        quantity_sold = 100 - price  # Revert to original demand logic
+        quantity_sold = 100 - price 
         return (price - self.mc) * max(quantity_sold, 0)
 
 
 def simulate_bertrand_rl_n(n_players = 2, max_iterations=500000, price_floor=10, price_cap=55, start_prices=10):
-      # Default to two players; generalize as needed
     firms = [
         Firm_N(mc=10, price_floor=price_floor, price_cap=price_cap)
         for _ in range(n_players)
@@ -65,11 +63,11 @@ def simulate_bertrand_rl_n(n_players = 2, max_iterations=500000, price_floor=10,
         new_prices = []
         for j, (firm, action) in enumerate(zip(firms, actions)):
             if j > 0 and prices[j] < prices[j - 1]:
-                new_price = min(prices[j - 1], 55)  # Match higher competitor price
+                new_price = min(prices[j - 1], 55)
             else:
-                if action == 0:  # Decrease price
+                if action == 0: 
                     new_price = max(prices[j] - 1, price_floor)
-                elif action == 2:  # Increase price
+                elif action == 2:
                     new_price = min(prices[j] + 1, price_cap)
                 else:
                     new_price = prices[j]
