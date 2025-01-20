@@ -1,0 +1,80 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+drop_durations_A, drop_durations_B = [], []
+drop_magnitudes_A, drop_magnitudes_B = [], []
+
+last_price_A = price_history_A[0]
+last_price_B = price_history_B[0]
+
+drop_detected_A, drop_detected_B = False, False
+drop_start_index_A, drop_start_index_B = 0, 0
+drop_start_price_A, drop_start_price_B = last_price_A, last_price_B
+lowest_price_A, lowest_price_B = last_price_A, last_price_B
+
+for i in range(1, len(price_history_A)):
+    current_price_A = price_history_A[i]
+    current_price_B = price_history_B[i]
+
+    if not drop_detected_A and current_price_A < last_price_A and current_price_A < current_price_B:
+        drop_detected_A = True
+        drop_start_price_A = last_price_A
+        drop_start_index_A = i
+        lowest_price_A = current_price_A
+
+    if not drop_detected_B and current_price_B < last_price_B and current_price_B < current_price_A:
+        drop_detected_B = True
+        drop_start_price_B = last_price_B
+        drop_start_index_B = i
+        lowest_price_B = current_price_B
+
+    if drop_detected_A:
+        lowest_price_A = min(lowest_price_A, current_price_A)
+        if current_price_A >= drop_start_price_A:
+            duration = i - drop_start_index_A
+            magnitude = drop_start_price_A - lowest_price_A
+            drop_durations_A.append(duration)
+            drop_magnitudes_A.append(magnitude)
+            drop_detected_A = False
+
+    if drop_detected_B:
+        lowest_price_B = min(lowest_price_B, current_price_B)
+        if current_price_B >= drop_start_price_B:
+            duration = i - drop_start_index_B
+            magnitude = drop_start_price_B - lowest_price_B
+            drop_durations_B.append(duration)
+            drop_magnitudes_B.append(magnitude)
+            drop_detected_B = False
+
+    last_price_A = current_price_A
+    last_price_B = current_price_B
+
+
+bins = np.arange(1, max(max(drop_magnitudes_A), max(drop_magnitudes_B)) + 2)
+
+counts_A, _ = np.histogram(drop_magnitudes_A, bins=bins)
+counts_B, _ = np.histogram(drop_magnitudes_B, bins=bins)
+x = np.arange(len(bins) - 1)  # Positions for each bin
+
+fig, ax = plt.subplots(figsize=(12, 6))
+
+bar_width = 0.4
+ax.bar(x - bar_width / 2, counts_A, width=bar_width, color="salmon", label="Firm A")
+ax.bar(x + bar_width / 2, counts_B, width=bar_width, color="skyblue", label="Firm B")
+
+ax.set_title("Price Drop Magnitudes by Firm", fontsize=16)
+ax.set_xlabel("Price Drop Magnitude", fontsize=12)
+ax.set_ylabel("Frequency", fontsize=12)
+ax.set_xticks(x)
+ax.set_xticklabels([str(int(m)) for m in bins[:-1]], fontsize=10)
+ax.legend(fontsize=12)
+
+for i, (count_A, count_B) in enumerate(zip(counts_A, counts_B)):
+    if count_A > 0:
+        ax.text(i - bar_width / 2, count_A, str(count_A), ha="center", va="bottom", fontsize=8)
+    if count_B > 0:
+        ax.text(i + bar_width / 2, count_B, str(count_B), ha="center", va="bottom", fontsize=8)
+
+plt.tight_layout()
+plt.savefig("price_drop_magnitudes_bins_1.png", format="png", dpi=300)
+plt.show()
