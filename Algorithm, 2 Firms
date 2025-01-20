@@ -77,14 +77,13 @@ def simulate_bertrand_rl(max_iterations=500000, price_floor=10, price_cap=55, st
         action_A = firm_A.get_action(state_A)
         action_B = firm_B.get_action(state_B)
 
-        # Adjust prices based on actions
         if price_history_A[i-1] < price_history_B[i-1]:
             price_A = min(price_B, 55)
             actions.append(2)
         else:
-            if action_A == 0:  # Decrease price
+            if action_A == 0:
                 price_A = max(price_A - 1, price_floor)
-            elif action_A == 2:  # Increase price
+            elif action_A == 2:
                 price_A = min(price_A + 1, price_cap)
             actions.append(action_A)
                 
@@ -93,9 +92,9 @@ def simulate_bertrand_rl(max_iterations=500000, price_floor=10, price_cap=55, st
             price_B = min(price_history_A[i-1], 55)
             actions.append(2)
         else:
-            if action_B == 0:  # Decrease price
+            if action_B == 0:
                 price_B = max(price_B - 1, price_floor)
-            elif action_B == 2:  # Increase price
+            elif action_B == 2:
                 price_B = min(price_B + 1, price_cap)
             actions.append(action_B)
 
@@ -110,15 +109,12 @@ def simulate_bertrand_rl(max_iterations=500000, price_floor=10, price_cap=55, st
             profit_A = firm_A.calculate_profit(price_A)
             profit_B = firm_B.calculate_profit(price_B)
         
-        # Update last price for both firms
         firm_A.last_price = price_B
         firm_B.last_price = price_A
 
-        # Update Q-values with scaled rewards
         firm_A.update_q_value(state_A, action_A, profit_A, firm_A.get_state(price_A, price_B))
         firm_B.update_q_value(state_B, action_B, profit_B, firm_B.get_state(price_B, price_A))
 
-        # Record prices for plotting
         price_history_A.append(price_A)
         price_history_B.append(price_B)
         reward.append(profit_A)
@@ -133,13 +129,11 @@ def simulate_multiple_runs(runs, max_iterations=500000, quantity_floor=0, quanti
     aggregated_policy = {}
 
     for _ in range(runs):
-        # Simulate one run
         _, _, _, Final_Policy = simulate_bertrand_rl(
             start_price_A=10, start_price_B=10
         )
         policy_A = Final_Policy[0]  # Extract Firm A's policy
 
-        # Aggregate actions
         for state, action in policy_A.items():
             if state not in aggregated_policy:
                 aggregated_policy[state] = {0: 0, 1: 0, 2: 0}
