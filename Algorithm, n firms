@@ -24,8 +24,8 @@ class Firm_N:
             self.q_table[next_state] = {0: 0, 1: 0, 2: 0}
         best_next_action = max(self.q_table[next_state], key=self.q_table[next_state].get)
 
-        competitor_price_effect = 0.5 * (next_state[1] - self.mc)
-        scaled_reward = reward + competitor_price_effect
+        last_price_effect = 0.5 * (next_state[1] - self.mc)
+        scaled_reward = reward + last_price_effect
 
         self.q_table[state][action] += self.learning_rate * (
             scaled_reward
