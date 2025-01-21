@@ -31,10 +31,10 @@ class Firm:
         best_next_action = max(self.q_table[next_state], key=self.q_table[next_state].get)
         
         #Weight the last price more heavily in decision-making
-        competitor_price_effect = 0.5 * (next_state[1] - self.mc)
+        last_price_effect = 0.5 * (next_state[1] - self.mc)
         
         #Scale reward and include a penalty for low prices
-        scaled_reward = reward + competitor_price_effect
+        scaled_reward = reward + last_price_effect
         self.q_table[state][action] += self.learning_rate * (scaled_reward + self.discount_factor * self.q_table[next_state][best_next_action] - self.q_table[state][action])
 
     def calculate_profit(self, price):
