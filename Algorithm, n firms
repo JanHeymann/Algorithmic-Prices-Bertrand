@@ -6,7 +6,6 @@ class Firm_N:
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.q_table = {}
-        self.last_price = (price_floor + price_cap) / 2
 
     def get_state(self, prices):
         return tuple(round(p, 2) for p in prices)
