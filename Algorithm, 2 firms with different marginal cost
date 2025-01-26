@@ -6,9 +6,8 @@ class Firm_diffmc:
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.q_table = {}
-        self.last_price = (price_floor + price_cap) / 2
     def get_state(self, price_A, price_B):
-        return (round(price_A, 2), round(price_B, 2), round(self.last_price, 2))
+        return (round(price_A, 2), round(price_B, 2))
     def get_action(self, state):
         if state not in self.q_table:
             self.q_table[state] = {0: 0, 1: 0, 2: 0}
