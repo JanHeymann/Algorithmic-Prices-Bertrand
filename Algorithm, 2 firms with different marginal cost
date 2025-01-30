@@ -26,7 +26,7 @@ class Firm_diffmc:
     def calculate_profit(self, price):
         quantity_sold = 100 - price
         return (price - self.mc) * max(quantity_sold, 0)
-def simulate_bertrand_diffmc(max_iterations=500000, price_floor=10, price_cap=55, start_price_A=None, start_price_B=None):
+def simulate_bertrand_diffmc(max_iterations=500000, price_floor=10, price_cap=55, start_price_A=10, start_price_B=10):
     firm_A = Firm(mc=10, price_floor=price_floor, price_cap=price_cap)
     firm_B = Firm(mc=20, price_floor=20, price_cap=price_cap)
 
